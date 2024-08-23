@@ -32,6 +32,7 @@
 		})
 		.then( (response) => response.json())
 		.then( (json) => {
+			console.log(json);
 			if (!hasStarted) initRadio(json['icestats']['source']);
 			else maintainRadio(json['icestats']['source']);
 		});
@@ -45,7 +46,7 @@
 				// since it's new, build a new div object to house it and append it to the radio div
 				$('#radio').append(addNewRadioSection(stream));
 			});
-			setInterval(getIcecastMetadata(true), 5000);
+			setInterval(getIcecastMetadata, 5000, true);
 		}
 	}
 
@@ -74,8 +75,8 @@
 			radiodata.forEach( (stream) => {
 				currRadioData.push(stream.server_name);
 				// update existing stream data
-				if (activeStreams[stream.server_name] != null) {
-					$(`#${server_name}`).children('.artist-title').html(`${stream.artist} - ${stream.title}`);
+				if (activeStreams.indexOf(stream.server_name) != null) {
+					$(`#${stream.server_name}`).children('.artist-title').html(`${stream.artist} - ${stream.title}`);
 				}
 				// add new radio if not in activeStreams
 				else {
@@ -83,8 +84,7 @@
 				}
 			});
 			// remove dead streams
-			const deadStreams = activeStreams.filter(x => radiodata['server_name'] != x);
-			console.log(deadStreams);
+			const deadStreams = activeStreams.filter(x => radiodata[x] != null);
 			deadStreams.forEach(x => $(`#radio #${x}`).remove());
 		}
 	}
