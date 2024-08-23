@@ -74,6 +74,8 @@ function draw(tFrame) {
 canvas.addEventListener("mousedown", (ev) =>{
     paused = true;
     putBallAtCursor(ev);
+    velocityX = 0;
+    velocityY = 0;
 });
 canvas.addEventListener("mouseup", () =>{
     paused = false;
@@ -101,6 +103,8 @@ canvas.addEventListener("touchstart", (ev) =>{
         currentTouchX = touch.clientX;
         currentTouchY = touch.clientY;
         putBallAtCursor(touch);
+        velocityX = 0;
+        velocityY = 0;
     }
 })
 canvas.addEventListener("touchend", (ev) =>{
