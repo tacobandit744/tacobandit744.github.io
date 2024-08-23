@@ -156,6 +156,20 @@ window.addEventListener("DOMContentLoaded", (()=> {
             }
         }
     })
+    // If canvas is resized, resize viewport
+    const resizeObserver = new ResizeObserver((entries)=>{
+        for(const entry of entries){
+            if(entry.contentBoxSize){
+                const boxSize = entry.contentBoxSize[0];
+                canvas.width = boxSize.inlineSize;
+                canvas.height = boxSize.blockSize;
+            }else {
+                canvas.width = entry.contentRect.width;
+                canvas.height = entry.contentRect.height;
+            }
+        }
+    });
+    resizeObserver.observe(canvas);
     function zero(tFrame){
         previousTime = tFrame;
         window.requestAnimationFrame(draw);
