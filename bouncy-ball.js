@@ -1,4 +1,3 @@
-
 // Initial positions & speed
 let velocityX = 0.15;
 let velocityY = 0.1;
@@ -44,7 +43,7 @@ function draw(tFrame) {
 
     ctx.fillStyle = "rgb(255 255 255 / 30%)"
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    if(!paused) {
+    if(!paused && delta < 300) {
         circlePosX += velocityX * delta;
         circlePosY += velocityY * delta;
         // bounce
