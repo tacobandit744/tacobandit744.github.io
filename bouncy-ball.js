@@ -11,8 +11,10 @@ const circleRadius = 50;
 
 // the bigger the number, the faster the ball goes down naturally
 const gravity = 0.001;
-// the smaller the number, the faster you throw
-const throwSpeed = 22;
+// the bigger the number, the faster you throw
+const throwSpeed = 0.05;
+// for some reason touch controls are way more sensitive
+const touchThrowSpeed = 0.005;
 // the bigger the number, the faster the ball stops
 const airResistance = 0.0005;
 
@@ -79,8 +81,57 @@ canvas.addEventListener("mouseup", () =>{
 canvas.addEventListener("mousemove", (ev)=>{
     if ((ev.buttons & 1) === 1){
         putBallAtCursor(ev);
-        velocityX = ev.movementX / throwSpeed;
-        velocityY = ev.movementY / throwSpeed;
+        velocityX = ev.movementX * throwSpeed;
+        velocityY = ev.movementY * throwSpeed;
+    }
+})
+let currentTouch = null;
+let currentTouchX = 0;
+let currentTouchY = 0;
+canvas.addEventListener("touchstart", (ev) =>{
+    // only react to touch if not already tracking one
+    if(currentTouch === null) {
+        ev.preventDefault();
+        paused = true;
+        const touch =
+            ev.targetTouches.length >= 1
+                ? ev.targetTouches.item(0)
+                : ev.touches.item(0);
+        currentTouch = touch.identifier;
+        currentTouchX = touch.clientX;
+        currentTouchY = touch.clientY;
+        putBallAtCursor(touch);
+    }
+})
+canvas.addEventListener("touchend", (ev) =>{
+    for (let i = 0; i < ev.changedTouches.length; i++) {
+        const touch = ev.changedTouches[i];
+        if(touch.identifier === currentTouch){
+            ev.preventDefault();
+            paused = false;
+            currentTouch = null;
+        }
+    }
+});
+canvas.addEventListener("touchcancel", (ev) =>{
+    for (let i = 0; i < ev.changedTouches.length; i++) {
+        const touch = ev.changedTouches[i];
+        if(touch.identifier === currentTouch){
+            ev.preventDefault();
+            paused = false;
+            currentTouch = null;
+        }
+    }
+});
+canvas.addEventListener("touchmove", (ev) =>{
+    for (let i = 0; i < ev.changedTouches.length; i++) {
+        const touch = ev.changedTouches[i];
+        if(touch.identifier === currentTouch){
+            ev.preventDefault();
+            putBallAtCursor(touch);
+            velocityX = (touch.clientX - currentTouchX) * touchThrowSpeed;
+            velocityY = (touch.clientY - currentTouchY) * touchThrowSpeed;
+        }
     }
 })
 window.requestAnimationFrame(draw);
