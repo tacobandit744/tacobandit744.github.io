@@ -16,7 +16,9 @@
 		<script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"  integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
 	</head>
 	<body>
-		<div id="radio"class="container"></div>
+		<div id="radio"class="container">
+			<div class="col-12" id="listeners"></div>
+		</div>
 	</body>
 </html>
 
@@ -32,7 +34,6 @@
 		})
 		.then( (response) => response.json())
 		.then( (json) => {
-			console.log(json);
 			if (!hasStarted) initRadio(json['icestats']['source']);
 			else maintainRadio(json['icestats']['source']);
 		});
@@ -41,7 +42,7 @@
 	function initRadio (radiodata) {
 		if (radiodata) {
 			radiodata.forEach( (stream) => {
-				console.log(stream);
+				stream.server_name = replaceSpacesWithUnderscore(stream.server_name);
 				activeStreams.push(stream.server_name);
 				// since it's new, build a new div object to house it and append it to the radio div
 				$('#radio').append(addNewRadioSection(stream));
@@ -56,13 +57,21 @@
 		return url;
 	}
 
+	function replaceSpacesWithUnderscore(text) {
+		return text.replace(/ /g, '_');
+	}
+
 	function addNewRadioSection(stream) {
 		return `
 			<div class="card" id="${stream.server_name}">
 				<div class="form-group col">
-					<div class="col artist-title">${stream.artist} - ${stream.title}</div>
+					<div class="col" id="artist-title-${stream.server_name}">${stream.artist} - ${stream.title}</div>
 					<div class="col">
-						<audio controls src="${fixMyURL(stream.listenurl)}" type="${stream.server_type}">
+						<div class="row">
+							<div class="col-6">
+								<audio controls src="${fixMyURL(stream.listenurl)}" type="${stream.server_type}">
+							</div>
+						</div>
 					</div>
 				</div>		
 			</div>			
@@ -73,19 +82,26 @@
 		if (radiodata) {
 			let currRadioData = [];
 			radiodata.forEach( (stream) => {
+				stream.server_name = replaceSpacesWithUnderscore(stream.server_name);
 				currRadioData.push(stream.server_name);
 				// update existing stream data
-				if (activeStreams.indexOf(stream.server_name) != null) {
-					$(`#${stream.server_name}`).children('.artist-title').html(`${stream.artist} - ${stream.title}`);
+				if (activeStreams.indexOf(stream.server_name) > -1) {
+					$(`#artist-title-${stream.server_name}`).html(`${stream.artist} - ${stream.title}`);
 				}
 				// add new radio if not in activeStreams
 				else {
+					activeStreams.push(stream.server_name);
 					$('#radio').append(addNewRadioSection(stream));
 				}
 			});
 			// remove dead streams
-			const deadStreams = activeStreams.filter(x => radiodata[x] != null);
-			deadStreams.forEach(x => $(`#radio #${x}`).remove());
+			const deadStreams = activeStreams.filter(x => {
+				return currRadioData.indexOf(x) < 0
+			});
+			deadStreams.forEach(x => {
+				activeStreams.splice(activeStreams.indexOf(x), 1);
+				$(`#${x}`).remove()
+			});
 		}
 	}
 </script>
