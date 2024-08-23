@@ -1,4 +1,4 @@
-window.addEventListener("DOMContentLoaded", (()=> {
+const onDom = (()=> {
     // Initial positions & speed
     let velocityX = 0.15;
     let velocityY = 0.1;
@@ -181,4 +181,9 @@ window.addEventListener("DOMContentLoaded", (()=> {
         window.requestAnimationFrame(draw);
     }
     window.requestAnimationFrame(zero);
-}));
+});
+if(document.readyState === "interactive" || document.readyState === "complete"){
+    onDom();
+}else {
+    window.addEventListener("DOMContentLoaded", onDom);
+}
