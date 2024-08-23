@@ -7,7 +7,7 @@ const onDom = (()=> {
     let circlePosY = 75;
 
     // how big the ball is, in pixels
-    const circleRadius = 50;
+    const circleRadius = 50.0;
 
     // the bigger the number, the faster the ball goes down naturally
     const gravity = 0.001;
@@ -19,12 +19,12 @@ const onDom = (()=> {
     const airResistance = 0.0005;
 
     // simulation resolution, 1/fps * 1000, 8 ~= 120fps
-    const speedIndex = 8;
+    const speedIndex = 8.0;
 
     // how many ms of lag are allowed before skipping
     // too big may cause a lot of lag when resuming
     // too small may cause the ball to freeze when at low fps
-    const tickLimit = 300;
+    const tickLimit = 300.0;
 
     let previousTime;
 
@@ -39,12 +39,28 @@ const onDom = (()=> {
     let rotation = 0;
     let angularMomentum = (Math.PI/180);
     // the higher this is, the faster each bounce spins
-    const angularImpact = 3;
+    const angularImpact = 3.0;
+
+    let trailBalls = [];
+    // the bigger this is, the longer the trail is, INTEGER ONLY
+    const maxTrailSize = 17;
+
+    function easeOut(x){
+        return x * x * x * x * x;
+    }
 
     function drawBall() {
-        ctx.setTransform(0.65, 0, 0, 0.65, circlePosX, circlePosY);
-        ctx.rotate(rotation);
-        ctx.drawImage(ballImage, -150, -75);
+        const trailTransparency= 1/trailBalls.length;
+        let trailAlpha = trailTransparency;
+        for(const trailIdx in trailBalls){
+            const trail = trailBalls[trailIdx];
+            ctx.globalAlpha = easeOut(trailAlpha);
+            ctx.setTransform(0.65, 0, 0, 0.65, trail.x, trail.y);
+            ctx.rotate(trail.rot);
+            ctx.drawImage(ballImage, -150, -75);
+            trailAlpha += trailTransparency;
+        }
+        ctx.globalAlpha = 1.0; //technically not needed
         ctx.setTransform(1,0,0,1,0,0);
         /*ctx.fillStyle = "red";
         ctx.beginPath();
@@ -90,12 +106,19 @@ const onDom = (()=> {
             velocityY -= airResistance * velocityY * speedIndex;
             velocityX -= airResistance * velocityX * speedIndex;
             rotation += angularMomentum;
+            // save info of ball
+        }
+    }
+    function updateBallPos(){
+        trailBalls.push({rot : rotation, x: circlePosX, y: circlePosY});
+        if(trailBalls.length >= maxTrailSize){
+            trailBalls.shift();
         }
     }
 
     function draw(tFrame) {
         let delta = tFrame - previousTime;
-        ctx.fillStyle = "rgb(255 255 255 / 30%)"
+        ctx.fillStyle = "white"
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         if(delta > speedIndex){
             previousTime = tFrame;
@@ -106,6 +129,7 @@ const onDom = (()=> {
                 delta -= speedIndex;
             }
         }
+        updateBallPos();
         drawBall();
         window.requestAnimationFrame(draw);
     }
