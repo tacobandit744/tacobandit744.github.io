@@ -115,6 +115,7 @@ const onDom = (()=> {
         putBallAtCursor(ev);
         velocityX = 0;
         velocityY = 0;
+        angularMomentum = 0;
     });
     canvas.addEventListener("mouseup", () => {
         paused = false;
@@ -144,6 +145,7 @@ const onDom = (()=> {
             putBallAtCursor(touch);
             velocityX = 0;
             velocityY = 0;
+            angularMomentum = 0;
         }
     })
     canvas.addEventListener("touchend", (ev) => {
