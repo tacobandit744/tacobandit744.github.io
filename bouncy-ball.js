@@ -18,6 +18,14 @@ window.addEventListener("DOMContentLoaded", (()=> {
     // the bigger the number, the faster the ball stops
     const airResistance = 0.0005;
 
+    // simulation resolution, 1/fps * 1000, 8 ~= 120fps
+    const speedIndex = 8;
+
+    // how many ms of lag are allowed before skipping
+    // too big may cause a lot of lag when resuming
+    // too small may cause the ball to freeze when at low fps
+    const tickLimit = 300;
+
     let previousTime;
 
     let paused = false;
@@ -37,16 +45,10 @@ window.addEventListener("DOMContentLoaded", (()=> {
         circlePosX = Math.max(Math.min(ev.clientX - rect.left, canvas.width - circleRadius), circleRadius);
         circlePosY = Math.max(Math.min(ev.clientY - rect.top, canvas.height - circleRadius), circleRadius);
     }
-
-    function draw(tFrame) {
-        const delta = tFrame - previousTime;
-        previousTime = tFrame;
-
-        ctx.fillStyle = "rgb(255 255 255 / 30%)"
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if (!paused && delta < 300) {
-            circlePosX += velocityX * delta;
-            circlePosY += velocityY * delta;
+    function doTick(){
+        if (!paused) {
+            circlePosX += velocityX * speedIndex;
+            circlePosY += velocityY * speedIndex;
             // bounce
             if (circlePosX > canvas.width - circleRadius) {
                 velocityX = -velocityX;
@@ -64,9 +66,24 @@ window.addEventListener("DOMContentLoaded", (()=> {
                 velocityY = -velocityY;
                 circlePosY = circleRadius;
             }
-            velocityY += gravity * delta;
-            velocityY -= airResistance * velocityY * delta;
-            velocityX -= airResistance * velocityX * delta;
+            velocityY += gravity * speedIndex;
+            velocityY -= airResistance * velocityY * speedIndex;
+            velocityX -= airResistance * velocityX * speedIndex;
+        }
+    }
+
+    function draw(tFrame) {
+        let delta = tFrame - previousTime;
+        ctx.fillStyle = "rgb(255 255 255 / 30%)"
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if(delta > speedIndex){
+            previousTime = tFrame;
+        }
+        if(delta < tickLimit) {
+            while (delta > speedIndex) {
+                doTick();
+                delta -= speedIndex;
+            }
         }
         drawBall();
         window.requestAnimationFrame(draw);
