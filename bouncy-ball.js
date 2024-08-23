@@ -35,8 +35,17 @@ const onDom = (()=> {
 
     const ballImage = new Image();
 
+    // Rotation of the ball, in radians
+    let rotation = 0;
+    let angularMomentum = (Math.PI/180);
+    // the higher this is, the faster each bounce spins
+    const angularImpact = 3;
+
     function drawBall() {
-        ctx.drawImage(ballImage, circlePosX, circlePosY, circleRadius, circleRadius);
+        ctx.setTransform(0.65, 0, 0, 0.65, circlePosX, circlePosY);
+        ctx.rotate(rotation);
+        ctx.drawImage(ballImage, -150, -75);
+        ctx.setTransform(1,0,0,1,0,0);
         /*ctx.fillStyle = "red";
         ctx.beginPath();
         ctx.arc(circlePosX, circlePosY, circleRadius, 0, Math.PI * 2, true)
@@ -45,8 +54,12 @@ const onDom = (()=> {
 
     function putBallAtCursor(ev) {
         const rect = canvas.getBoundingClientRect();
-        circlePosX = Math.max(Math.min(ev.clientX - rect.left - circleRadius / 2, canvas.width - circleRadius), 0);
-        circlePosY = Math.max(Math.min(ev.clientY - rect.top - circleRadius / 2, canvas.height - circleRadius), 0);
+        circlePosX = Math.max(Math.min(ev.clientX - rect.left, canvas.width - circleRadius), circleRadius);
+        circlePosY = Math.max(Math.min(ev.clientY - rect.top, canvas.height - circleRadius), circleRadius);
+    }
+    function setRotation(){
+        angularMomentum = (Math.PI/180) * ((Math.abs(velocityX) + Math.abs(velocityY)) * angularImpact * Math.sign(velocityX));
+
     }
     function doTick(){
         if (!paused) {
@@ -56,22 +69,27 @@ const onDom = (()=> {
             if (circlePosX > canvas.width - circleRadius) {
                 velocityX = -velocityX;
                 circlePosX = canvas.width - circleRadius;
+                setRotation();
             }
             if (circlePosY > canvas.height - circleRadius) {
                 velocityY = -velocityY;
                 circlePosY = canvas.height - circleRadius;
+                setRotation();
             }
-            if (circlePosX < 0) {
+            if (circlePosX < circleRadius) {
                 velocityX = -velocityX;
-                circlePosX = 0;
+                circlePosX = circleRadius;
+                setRotation();
             }
-            if (circlePosY < 0) {
+            if (circlePosY < circleRadius) {
                 velocityY = -velocityY;
-                circlePosY = 0;
+                circlePosY = circleRadius;
+                setRotation();
             }
             velocityY += gravity * speedIndex;
             velocityY -= airResistance * velocityY * speedIndex;
             velocityX -= airResistance * velocityX * speedIndex;
+            rotation += angularMomentum;
         }
     }
 
@@ -170,8 +188,8 @@ const onDom = (()=> {
                 canvas.width = entry.contentRect.width;
                 canvas.height = entry.contentRect.height;
             }
-            circlePosX = Math.max(Math.min(circlePosX, canvas.width - circleRadius), 0);
-            circlePosY = Math.max(Math.min(circlePosY, canvas.height - circleRadius), 0);
+            circlePosX = Math.max(Math.min(circlePosX, canvas.width - circleRadius), circleRadius);
+            circlePosY = Math.max(Math.min(circlePosY, canvas.height - circleRadius), circleRadius);
         }
     });
     resizeObserver.observe(canvas);
