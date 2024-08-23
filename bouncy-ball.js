@@ -33,17 +33,20 @@ window.addEventListener("DOMContentLoaded", (()=> {
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
 
+    const ballImage = new Image();
+
     function drawBall() {
-        ctx.fillStyle = "red";
+        ctx.drawImage(ballImage, circlePosX, circlePosY, circleRadius, circleRadius);
+        /*ctx.fillStyle = "red";
         ctx.beginPath();
         ctx.arc(circlePosX, circlePosY, circleRadius, 0, Math.PI * 2, true)
-        ctx.fill();
+        ctx.fill();*/
     }
 
     function putBallAtCursor(ev) {
         const rect = canvas.getBoundingClientRect();
-        circlePosX = Math.max(Math.min(ev.clientX - rect.left, canvas.width - circleRadius), circleRadius);
-        circlePosY = Math.max(Math.min(ev.clientY - rect.top, canvas.height - circleRadius), circleRadius);
+        circlePosX = Math.max(Math.min(ev.clientX - rect.left - circleRadius / 2, canvas.width - circleRadius), 0);
+        circlePosY = Math.max(Math.min(ev.clientY - rect.top - circleRadius / 2, canvas.height - circleRadius), 0);
     }
     function doTick(){
         if (!paused) {
@@ -58,13 +61,13 @@ window.addEventListener("DOMContentLoaded", (()=> {
                 velocityY = -velocityY;
                 circlePosY = canvas.height - circleRadius;
             }
-            if (circlePosX < circleRadius) {
+            if (circlePosX < 0) {
                 velocityX = -velocityX;
-                circlePosX = circleRadius;
+                circlePosX = 0;
             }
-            if (circlePosY < circleRadius) {
+            if (circlePosY < 0) {
                 velocityY = -velocityY;
-                circlePosY = circleRadius;
+                circlePosY = 0;
             }
             velocityY += gravity * speedIndex;
             velocityY -= airResistance * velocityY * speedIndex;
@@ -167,11 +170,14 @@ window.addEventListener("DOMContentLoaded", (()=> {
                 canvas.width = entry.contentRect.width;
                 canvas.height = entry.contentRect.height;
             }
+            circlePosX = Math.max(Math.min(circlePosX, canvas.width - circleRadius), 0);
+            circlePosY = Math.max(Math.min(circlePosY, canvas.height - circleRadius), 0);
         }
     });
     resizeObserver.observe(canvas);
     function zero(tFrame){
         previousTime = tFrame;
+        ballImage.src = "images/basketball.svg";
         window.requestAnimationFrame(draw);
     }
     window.requestAnimationFrame(zero);
