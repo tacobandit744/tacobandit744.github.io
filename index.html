@@ -14,6 +14,10 @@
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
 		<!-- JQuery -->
 		<script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"  integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
+		<!-- ogv.js -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.7/require.min.js" integrity="sha512-J5ha2LF4Le+PBQnI5+xAVJDR+sZG9uSgroy4n/A6TLjNkvYQbqZA8WHZdaOvJ0HiKkBC9Frmvs10rFDSHKmveQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+		<script>var exports = {};</script>
+		<script src="https://cdn.jsdelivr.net/npm/videojs-ogvjs@1.3.1/es5/plugin.min.js"></script>		
 		<script src="bouncy-ball.js" async></script>
 		<style>
 			#canvas{
@@ -37,6 +41,7 @@
 <!-- Internet Radio -->
 <script>
 	let activeStreams = [];
+	let isSafari = true;
 	$(document).ready(function() {
 		getIcecastMetadata(false);
 	});
@@ -58,7 +63,7 @@
 				stream.server_name = replaceSpacesWithUnderscore(stream.server_name);
 				activeStreams.push(stream.server_name);
 				// since it's new, build a new div object to house it and append it to the radio div
-				$('#radio').append(addNewRadioSection(stream));
+				addNewRadioSection(stream);
 			});
 			setInterval(getIcecastMetadata, 5000, true);
 		}
@@ -74,21 +79,33 @@
 		return text.replace(/ /g, '_');
 	}
 
+	function convertPlayer(source) {
+		const player = new OGVPlayer();
+		player.src = source;
+		return player;
+	}
+
 	function addNewRadioSection(stream) {
-		return `
+		let audioDivId = `playback-controls-${stream.server_name}`;
+		let audioSrc = fixMyURL(stream.listenurl);
+		let section = `
 			<div class="card" id="${stream.server_name}">
 				<div class="form-group col">
 					<div class="col" id="artist-title-${stream.server_name}">${stream.artist} - ${stream.title}</div>
 					<div class="col">
 						<div class="row">
-							<div class="col-6">
-								<audio controls src="${fixMyURL(stream.listenurl)}" type="${stream.server_type}">
+							<div class="col-6" id="${audioDivId}">
+								${isSafari ? "" : `<audio controls src="${audioSrc}" type="${stream.server_type}">`}
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 			`;
+		$('#radio').append(section);
+		if (isSafari) {
+			$(`#${audioDivId}`).append(convertPlayer(stream));
+		}
 	}
 
 	function maintainRadio(radiodata) {
@@ -104,7 +121,7 @@
 				// add new radio if not in activeStreams
 				else {
 					activeStreams.push(stream.server_name);
-					$('#radio').append(addNewRadioSection(stream));
+					addNewRadioSection(stream);
 				}
 			});
 			// remove dead streams
