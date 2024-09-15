@@ -15,10 +15,9 @@
 		<!-- JQuery -->
 		<script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"  integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
 		<!-- ogv.js -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.7/require.min.js" integrity="sha512-J5ha2LF4Le+PBQnI5+xAVJDR+sZG9uSgroy4n/A6TLjNkvYQbqZA8WHZdaOvJ0HiKkBC9Frmvs10rFDSHKmveQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-		<script>var exports = {};</script>
-		<script src="https://cdn.jsdelivr.net/npm/videojs-ogvjs@1.3.1/es5/plugin.min.js"></script>		
-		<script src="bouncy-ball.js" async></script>
+		<script src="scripts/ogvjs-1.9.0/ogv.js"></script>
+		<!-- Courtesy of a Frenchman -->	
+		<script src="scripts/bouncy-ball.js" async></script>
 		<style>
 			#canvas{
 				border: 1px solid black;
@@ -41,7 +40,8 @@
 <!-- Internet Radio -->
 <script>
 	let activeStreams = [];
-	let isSafari = true;
+	let isSafari = navigator.browser === 'Safari';
+	console.log(isSafari);
 	$(document).ready(function() {
 		getIcecastMetadata(false);
 	});
@@ -73,20 +73,24 @@
 		url = url.replace("http", "https");
 		url = url.replace(":8000", "");
 		return url;
+		console.log('url: ', url)
 	}
 
 	function replaceSpacesWithUnderscore(text) {
 		return text.replace(/ /g, '_');
 	}
 
-	function convertPlayer(source) {
+	function convertPlayer(source, type) {
 		const player = new OGVPlayer();
 		player.src = source;
+		player.controls = true;
+		player.type = type;
 		return player;
 	}
 
 	function addNewRadioSection(stream) {
 		let audioDivId = `playback-controls-${stream.server_name}`;
+		let audioElId = `audio-${stream.server_name}`;
 		let audioSrc = fixMyURL(stream.listenurl);
 		let section = `
 			<div class="card" id="${stream.server_name}">
@@ -95,7 +99,7 @@
 					<div class="col">
 						<div class="row">
 							<div class="col-6" id="${audioDivId}">
-								${isSafari ? "" : `<audio controls src="${audioSrc}" type="${stream.server_type}">`}
+								<audio id="${audioElId}" controls src="${audioSrc}" type="${stream.server_type}">}
 							</div>
 						</div>
 					</div>
@@ -104,7 +108,7 @@
 			`;
 		$('#radio').append(section);
 		if (isSafari) {
-			$(`#${audioDivId}`).append(convertPlayer(stream));
+			$(`#${audioElId}`).append(convertPlayer(audioSrc, stream.server_type));
 		}
 	}
 
