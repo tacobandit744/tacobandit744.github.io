@@ -16,6 +16,9 @@
 		<script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"  integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
 		<!-- ogv.js -->
 		<script src="scripts/ogvjs-1.9.0/ogv.js"></script>
+		<!-- video.js -->
+		<link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
+		<script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
 		<!-- Courtesy of a Frenchman -->	
 		<script src="scripts/bouncy-ball.js" async></script>
 		<style>
@@ -40,8 +43,9 @@
 <!-- Internet Radio -->
 <script>
 	let activeStreams = [];
-	let isSafari = navigator.browser === 'Safari';
-	console.log(isSafari);
+	let isSafari = /^((?!chrome|android).)*safari/i.test(window.navigator.userAgent);
+	isSafari = true;
+	console.log("Is Safari: "+isSafari);
 	$(document).ready(function() {
 		getIcecastMetadata(false);
 	});
@@ -80,18 +84,45 @@
 		return text.replace(/ /g, '_');
 	}
 
-	function convertPlayer(source, type) {
+	function createOGVPlayer(source, type, audioDiv, name) {
 		const player = new OGVPlayer();
 		player.src = source;
 		player.controls = true;
 		player.type = type;
-		return player;
+		$(`#${audioDiv}`).append(player);
+		$(`#${audioDiv}`).append(createPlayerUI(player, name));
+
+	}
+
+	function createPlayerUI(player, type, name) {
+		const output = `
+			<video
+				id="my-video-${name}"
+				class="video-js"
+				controls
+				preload="auto"
+				width="640"
+				height="264"
+				poster="images/og_512x512.png"
+				data-setup="{}"
+			>
+				<source src="${player.src}" type="${player.type}" />
+				<p class="vjs-no-js">
+				To view this video please enable JavaScript, and consider upgrading to a
+				web browser that
+				<a href="https://videojs.com/html5-video-support/" target="_blank"
+					>supports HTML5 video</a
+				>
+				</p>
+			</video>
+		`;
+		return output;
 	}
 
 	function addNewRadioSection(stream) {
 		let audioDivId = `playback-controls-${stream.server_name}`;
-		let audioElId = `audio-${stream.server_name}`;
 		let audioSrc = fixMyURL(stream.listenurl);
+		let audioElHTML = `<audio controls src="${audioSrc}" type="${stream.server_type}">}`;
 		let section = `
 			<div class="card" id="${stream.server_name}">
 				<div class="form-group col">
@@ -99,7 +130,6 @@
 					<div class="col">
 						<div class="row">
 							<div class="col-6" id="${audioDivId}">
-								<audio id="${audioElId}" controls src="${audioSrc}" type="${stream.server_type}">}
 							</div>
 						</div>
 					</div>
@@ -108,7 +138,9 @@
 			`;
 		$('#radio').append(section);
 		if (isSafari) {
-			$(`#${audioElId}`).append(convertPlayer(audioSrc, stream.server_type));
+			createOGVPlayer(audioSrc, stream.server_type, audioDivId, stream.stream_name);
+		} else {
+			$(`#${audioDivId}`).append(audioElHTML);
 		}
 	}
 
