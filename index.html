@@ -14,11 +14,6 @@
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
 		<!-- JQuery -->
 		<script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"  integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
-		<!-- ogv.js -->
-		<script src="scripts/ogvjs-1.9.0/ogv.js"></script>
-		<!-- video.js -->
-		<link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
-		<script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
 		<!-- Courtesy of a Frenchman -->	
 		<script src="scripts/bouncy-ball.js" async></script>
 		<style>
@@ -45,7 +40,6 @@
 	let activeStreams = [];
 	let isSafari = /^((?!chrome|android).)*safari/i.test(window.navigator.userAgent);
 	isSafari = true;
-	console.log("Is Safari: "+isSafari);
 	$(document).ready(function() {
 		getIcecastMetadata(false);
 	});
@@ -64,10 +58,14 @@
 	function initRadio (radiodata) {
 		if (radiodata) {
 			radiodata.forEach( (stream) => {
-				stream.server_name = replaceSpacesWithUnderscore(stream.server_name);
-				activeStreams.push(stream.server_name);
 				// since it's new, build a new div object to house it and append it to the radio div
-				addNewRadioSection(stream);
+				console.log(stream.server_type)
+				if ( stream.server_type && ((isSafari && stream.server_type == 'audio/mpeg') || (!isSafari))) {
+					console.log("we entered!")
+					stream.server_name = replaceSpacesWithUnderscore(stream.server_name);
+					activeStreams.push(stream.server_name);
+					addNewRadioSection(stream);
+				} 
 			});
 			setInterval(getIcecastMetadata, 5000, true);
 		}
@@ -77,87 +75,53 @@
 		url = url.replace("http", "https");
 		url = url.replace(":8000", "");
 		return url;
-		console.log('url: ', url)
 	}
 
 	function replaceSpacesWithUnderscore(text) {
 		return text.replace(/ /g, '_');
 	}
 
-	function createOGVPlayer(source, type, audioDiv, name) {
-		const player = new OGVPlayer();
-		player.src = source;
-		player.controls = true;
-		player.type = type;
-		$(`#${audioDiv}`).append(player);
-		$(`#${audioDiv}`).append(createPlayerUI(player, name));
-
-	}
-
-	function createPlayerUI(player, type, name) {
-		const output = `
-			<video
-				id="my-video-${name}"
-				class="video-js"
-				controls
-				preload="auto"
-				width="640"
-				height="264"
-				poster="images/og_512x512.png"
-				data-setup="{}"
-			>
-				<source src="${player.src}" type="${player.type}" />
-				<p class="vjs-no-js">
-				To view this video please enable JavaScript, and consider upgrading to a
-				web browser that
-				<a href="https://videojs.com/html5-video-support/" target="_blank"
-					>supports HTML5 video</a
-				>
-				</p>
-			</video>
+	function generateNewSection(stream) {
+		return `
+			<div class="card" id="${stream.server_name}">
+				<div class="form-group col">
+					<div class="col" id="artist-title-${stream.server_name}">${stream.artist ? stream.artist : stream.server_type} - ${stream.title}</div>
+					<div class="col">
+						<div class="row">
+							<div class="col-6" id="playback-controls-${stream.server_name}">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		`;
-		return output;
 	}
 
 	function addNewRadioSection(stream) {
 		let audioDivId = `playback-controls-${stream.server_name}`;
 		let audioSrc = fixMyURL(stream.listenurl);
 		let audioElHTML = `<audio controls src="${audioSrc}" type="${stream.server_type}">}`;
-		let section = `
-			<div class="card" id="${stream.server_name}">
-				<div class="form-group col">
-					<div class="col" id="artist-title-${stream.server_name}">${stream.artist} - ${stream.title}</div>
-					<div class="col">
-						<div class="row">
-							<div class="col-6" id="${audioDivId}">
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			`;
+		let section = generateNewSection(stream);
 		$('#radio').append(section);
-		if (isSafari) {
-			createOGVPlayer(audioSrc, stream.server_type, audioDivId, stream.stream_name);
-		} else {
-			$(`#${audioDivId}`).append(audioElHTML);
-		}
+		$(`#${audioDivId}`).append(audioElHTML);
 	}
 
 	function maintainRadio(radiodata) {
 		if (radiodata) {
 			let currRadioData = [];
 			radiodata.forEach( (stream) => {
-				stream.server_name = replaceSpacesWithUnderscore(stream.server_name);
-				currRadioData.push(stream.server_name);
-				// update existing stream data
-				if (activeStreams.indexOf(stream.server_name) > -1) {
-					$(`#artist-title-${stream.server_name}`).html(`${stream.artist} - ${stream.title}`);
-				}
-				// add new radio if not in activeStreams
-				else {
-					activeStreams.push(stream.server_name);
-					addNewRadioSection(stream);
+				if ( stream.server_type && ((isSafari && stream.server_type == 'audio/mpeg') || (!isSafari))) {
+					stream.server_name = replaceSpacesWithUnderscore(stream.server_name);
+					currRadioData.push(stream.server_name);
+					// update existing stream data
+					if (activeStreams.indexOf(stream.server_name) > -1) {
+						$(`#artist-title-${stream.server_name}`).html(`${ stream.artist ? stream.artist : stream.server_type} - ${stream.title}`);
+					}
+					// add new radio if not in activeStreams
+					else {
+						activeStreams.push(stream.server_name);
+						addNewRadioSection(stream);
+					}
 				}
 			});
 			// remove dead streams
