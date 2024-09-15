@@ -40,7 +40,8 @@
 <!-- Internet Radio -->
 <script>
 	let activeStreams = [];
-	let isSafari = navigator.browser === 'Safari';
+	let isSafari = /^((?!chrome|android).)*safari/i.test(window.navigator.userAgent);
+	console.log(window.navigator.userAgent, window.navigator.browser);
 	console.log(isSafari);
 	$(document).ready(function() {
 		getIcecastMetadata(false);
